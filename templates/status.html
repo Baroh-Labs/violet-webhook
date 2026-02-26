@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="30">
+    <title>Violet Webhook Status</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; padding: 24px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { font-size: 1.5rem; margin-bottom: 24px; color: #a78bfa; }
+        h1 span { color: #64748b; font-weight: normal; font-size: 0.9rem; margin-left: 12px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .card { background: #1e293b; border-radius: 8px; padding: 16px; }
+        .card .label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+        .card .value { font-size: 1.5rem; font-weight: 600; margin-top: 4px; }
+        .card .value.green { color: #4ade80; }
+        .card .value.red { color: #f87171; }
+        .card .value.yellow { color: #fbbf24; }
+        .card .value.blue { color: #60a5fa; }
+        .status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+        .status-dot.ok { background: #4ade80; }
+        .status-dot.fail { background: #f87171; }
+        .section { background: #1e293b; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+        .section h2 { font-size: 0.9rem; color: #94a3b8; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 6px 10px; font-size: 0.85rem; }
+        th { color: #64748b; border-bottom: 1px solid #334155; }
+        td { border-bottom: 1px solid #1e293b; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+        .badge.created { background: #065f46; color: #6ee7b7; }
+        .badge.skip { background: #1e3a5f; color: #93c5fd; }
+        .badge.duplicate { background: #713f12; color: #fde68a; }
+        .badge.error { background: #7f1d1d; color: #fca5a5; }
+        .meta { font-size: 0.75rem; color: #475569; margin-top: 16px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Violet Webhook Service <span>auto-refreshes every 30s</span></h1>
+
+        <div class="grid">
+            <div class="card">
+                <div class="label">Uptime</div>
+                <div class="value blue">{{ uptime }}</div>
+            </div>
+            <div class="card">
+                <div class="label">Salesforce</div>
+                <div class="value {% if sf_connected %}green{% else %}red{% endif %}">
+                    <span class="status-dot {% if sf_connected %}ok{% else %}fail{% endif %}"></span>
+                    {% if sf_connected %}Connected{% else %}Disconnected{% endif %}
+                </div>
+            </div>
+            <div class="card">
+                <div class="label">Webhooks Received</div>
+                <div class="value">{{ webhooks_received }}</div>
+            </div>
+            <div class="card">
+                <div class="label">SF Records Created</div>
+                <div class="value green">{{ created }}</div>
+            </div>
+            <div class="card">
+                <div class="label">Duplicates Skipped</div>
+                <div class="value yellow">{{ duplicates }}</div>
+            </div>
+            <div class="card">
+                <div class="label">Chats Skipped</div>
+                <div class="value">{{ skipped }}</div>
+            </div>
+            <div class="card">
+                <div class="label">Errors</div>
+                <div class="value {% if errors > 0 %}red{% endif %}">{{ errors }}</div>
+            </div>
+            <div class="card">
+                <div class="label">Dead Letter Queue</div>
+                <div class="value {% if dead_letter_count > 0 %}red{% else %}green{% endif %}">{{ dead_letter_count }}</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Timestamps</h2>
+            <table>
+                <tr><td style="color:#94a3b8;">Last Webhook</td><td>{{ last_webhook }}</td></tr>
+                <tr><td style="color:#94a3b8;">Last SF Create</td><td>{{ last_created }}</td></tr>
+            </table>
+        </div>
+
+        {% if recent_events %}
+        <div class="section">
+            <h2>Recent Events (last 20)</h2>
+            <table>
+                <thead>
+                    <tr><th>Time</th><th>Type</th><th>Chat ID</th><th>Detail</th></tr>
+                </thead>
+                <tbody>
+                    {% for e in recent_events %}
+                    <tr>
+                        <td>{{ e.time }}</td>
+                        <td><span class="badge {{ e.type }}">{{ e.type }}</span></td>
+                        <td style="font-family:monospace;">{{ e.chat_id }}</td>
+                        <td>{{ e.detail }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <div class="meta">
+            Violet Webhook Service v1.0 &middot; SF Instance: {{ sf_instance or 'N/A' }}
+        </div>
+    </div>
+</body>
+</html>
